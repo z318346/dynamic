@@ -11,12 +11,6 @@ struct AdvancedTools: View {
     func tr(_ a: String, _ b: String) -> String { vi ? a : b }
     var body: some View {
         List {
-            Section("Demo Lab") {
-                NavigationLink { DeviceDemoLab(vi: vi) } label: {
-                    Label(tr("Thử cấu hình iPhone (mô phỏng)", "Try iPhone profile (simulation)"), systemImage: "slider.horizontal.3")
-                }
-                Text(tr("Chỉ lưu cấu hình thử nghiệm trong app. Không can thiệp iOS.", "Stores simulated settings in the app only. No system modifications.")).font(.caption).foregroundStyle(.secondary)
-            }
             Section(tr("Thiết bị thực tế", "Current device")) {
                 LabeledContent("iOS", value: UIDevice.current.systemVersion)
                 LabeledContent(tr("Mã phần cứng", "Hardware identifier"), value: hardwareID)

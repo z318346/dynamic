@@ -37,3 +37,26 @@ jobs:
           name: dynamic-unsigned
           path: dynamic.ipa
           if-no-files-found: error
+  publish:
+    if: github.ref == 'refs/heads/advanced-1.3'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dynamic-unsigned
+          path: dist
+      - name: Publish v1.3
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          unzip -t dist/dynamic.ipa
+          if gh release view v1.3 >/dev/null 2>&1; then
+            echo "v1.3 already exists; leaving release unchanged."
+            exit 0
+          fi
+          gh release create v1.3 dist/dynamic.ipa --target "$GITHUB_SHA" --title "dynamic 1.3" --latest --notes "Bản native 1.3: Live Activity trống, công cụ AI trên thiết bị tương thích, xuất hình nền và ảnh nền thẻ, nhập Wallet pass đã ký, chỉnh sửa và sao lưu plist cục bộ. Bố cục Dynamic Island chỉ xem trước. Không tích hợp worse_query, không đổi model hệ thống hay mở khóa Siri. IPA chưa ký; chưa kiểm thử trên iPhone thật."
