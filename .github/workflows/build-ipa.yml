@@ -1,7 +1,7 @@
 name: Build dynamic IPA
 on:
   push:
-    branches: [main]
+    branches: [main, advanced-1.3]
   workflow_dispatch:
 permissions:
   contents: read

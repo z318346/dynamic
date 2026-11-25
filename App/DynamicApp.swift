@@ -129,6 +129,15 @@ struct HomeView: View {
                         Text(tr("Tối đa 8 giờ mỗi phiên. iOS có thể ẩn phiên trống hoặc kết thúc sớm. Không thể thu nhỏ vùng camera.", "Up to 8 hours per session. iOS may hide blank activities or end them early. The physical cutout cannot shrink."))
                             .font(.footnote).foregroundStyle(.secondary)
                     }.padding(18).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 24))
+                    NavigationLink {
+                        AdvancedTools(vi: vi)
+                    } label: {
+                        HStack {
+                            Label(tr("Công cụ nâng cao", "Advanced tools"), systemImage: "slider.horizontal.3")
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.caption)
+                        }.padding(15).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(.plain)
                     Picker(tr("Ngôn ngữ", "Language"), selection: $language) {
                         Text(tr("Hệ thống", "System")).tag("system")
                         Text("Tiếng Việt").tag("vi")
@@ -176,7 +185,7 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Mở hồ sơ TikTok", "Opens TikTok profile"))
-                    Text(tr("Phiên bản", "Version") + " " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.2"))
+                    Text(tr("Phiên bản", "Version") + " " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.3"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
