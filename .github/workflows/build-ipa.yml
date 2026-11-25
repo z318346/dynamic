@@ -40,7 +40,9 @@ jobs:
           file "$APP/dynamic" "$EXT/DynamicWidget"
           VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Info.plist")
           EXT_VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$EXT/Info.plist")
+          echo "App version: $VERSION; widget version: $EXT_VERSION"
           test "$VERSION" = "$EXT_VERSION"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Info.plist")" = "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$EXT/Info.plist")"
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             test "${GITHUB_REF_NAME#v}" = "$VERSION"
           fi

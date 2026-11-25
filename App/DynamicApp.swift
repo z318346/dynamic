@@ -5,7 +5,7 @@ import UIKit
 @main
 struct DynamicApp: App {
     var body: some Scene {
-        WindowGroup { HomeView() }
+        WindowGroup { DynamicTabs() }
     }
 }
 
@@ -82,7 +82,7 @@ final class SessionController: ObservableObject {
 }
 
 struct HomeView: View {
-    @StateObject private var controller = SessionController()
+    @ObservedObject var controller: SessionController
     @AppStorage("language") private var language = "system"
     @AppStorage("appearance") private var appearance = "system"
     @State private var presentation = "compact"
@@ -158,34 +158,6 @@ struct HomeView: View {
                         Text(tr("Tối đa 8 giờ mỗi phiên. iOS có thể ẩn phiên trống hoặc kết thúc sớm. Không thể thu nhỏ vùng camera.", "Up to 8 hours per session. iOS may hide blank activities or end them early. The physical cutout cannot shrink."))
                             .font(.footnote).foregroundStyle(.secondary)
                     }.padding(18).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 24))
-                    NavigationLink {
-                        AdvancedTools(vi: vi)
-                    } label: {
-                        HStack {
-                            Label(tr("Công cụ nâng cao", "Advanced tools"), systemImage: "slider.horizontal.3")
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.caption)
-                        }.padding(15).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
-                    }.buttonStyle(.plain)
-                    NavigationLink {
-                        DeviceCompatibilityView(vi: vi)
-                    } label: {
-                        HStack {
-                            Label(tr("Thiết bị tương thích", "Compatible devices"), systemImage: "checkmark.shield")
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.caption)
-                        }.padding(15).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
-                    }.buttonStyle(.plain)
-                    Picker(tr("Ngôn ngữ", "Language"), selection: $language) {
-                        Text(tr("Hệ thống", "System")).tag("system")
-                        Text("Tiếng Việt").tag("vi")
-                        Text("English").tag("en")
-                    }
-                    Picker(tr("Giao diện", "Appearance"), selection: $appearance) {
-                        Text(tr("Hệ thống", "System")).tag("system")
-                        Text(tr("Sáng", "Light")).tag("light")
-                        Text(tr("Tối", "Dark")).tag("dark")
-                    }
                     Text(tr("Không tài khoản. Không máy chủ. Live Activities chỉ hiển thị Dynamic Island trên iPhone có phần cứng tương thích.", "No account. No server. Dynamic Island requires compatible iPhone hardware."))
                         .font(.caption).foregroundStyle(.secondary)
                     Button {
@@ -223,7 +195,7 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Mở hồ sơ TikTok", "Opens TikTok profile"))
-                    Text(tr("Phiên bản", "Version") + " " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.3.3"))
+                    Text(tr("Phiên bản", "Version") + " " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.4"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)

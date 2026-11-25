@@ -1,7 +1,9 @@
-# dynamic 1.3.3
+# dynamic 1.4
 
-- Ad-hoc signed app and Live Activity extension; signature and archive validation.
-- Versioned IPA, SHA-256 checksum and bilingual release notes.
-- Automated version/tag releases; existing releases remain unchanged.
-- Retains native Live Activities, manual renewal, device identification, compatible on-device AI, artwork exports and local plist editing.
-- Requires re-signing with a valid provisioning setup for app and widget. No physical-device validation yet. No system identity modifications or sandbox escapes.
+- Four tabs: Device, Customize, Backups, Settings.
+- Apply, discard and restore actual app preferences.
+- Manual Live Activity restart, not a SpringBoard respring.
+- Match app/widget versions; validate IPA and SHA-256.
+- Retain native tools and local plist editor.
+
+Ad-hoc IPA requires valid re-signing. No system identity changes or sandbox escapes. Physical-device testing not verified.

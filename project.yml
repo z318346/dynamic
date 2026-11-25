@@ -7,8 +7,8 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "1"
-    MARKETING_VERSION: "1.3.3"
-    CURRENT_PROJECT_VERSION: "12"
+    MARKETING_VERSION: "1.4"
+    CURRENT_PROJECT_VERSION: "13"
 targets:
   dynamic:
     type: application
@@ -34,6 +34,8 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         CFBundleDisplayName: dynamic
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dynamicisland.dynamic.widget
