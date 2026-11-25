@@ -1,12 +1,14 @@
-# dynamic 1.3.2
-Native iPhone app (iOS 17+). No account or server required.
+# dynamic
 
-## Use
-- Sign the unsigned IPA with a compatible signing setup that includes its widget extension.
-- Open dynamic and enable Live Activities in iOS settings if needed.
-- Start dynamic. On supported iPhones, iOS may present a blank Dynamic Island activity; on other iPhones it may show a Lock Screen activity.
-- Restart session manually if expired or stale. iOS controls visibility and maximum duration (up to 8 hours per activity).
-- Compatible devices shows hardware identification and current authorization. In-app AI requires an available Apple model on iOS 26+.
+Native iPhone app for iOS 17+. No account required.
 
-## Limits
-Layout presets are previews only. No protected system modification, sandbox escape, model spoofing or unsupported AI unlocking. No guarantee of persistent visibility. Physical-device testing is not yet verified.
+## Installation
+Download the versioned IPA from GitHub Releases. Ad-hoc signing alone does not authorize installation on a stock iPhone. Re-sign the app and its widget extension using a compatible provisioning setup. Enable Live Activities in iOS settings as needed.
+
+## Features
+Blank Live Activity on compatible Dynamic Island devices, manual session restart, device compatibility checks, available on-device Apple AI, artwork export and local plist editing. iOS controls activity visibility and duration; layout presets are previews only.
+
+## Releases
+GitHub Actions builds, signs ad-hoc, checks signatures, validates ZIP integrity, generates SHA-256 and publishes versioned assets with bilingual notes. See CHANGELOG.md and CHANGELOG_VI.md.
+
+No system model changes, exploit integration or hardware feature unlocking. Physical iPhone testing has not been verified.
