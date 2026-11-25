@@ -35,6 +35,12 @@ struct AdvancedTools: View {
                 NavigationLink { ArtworkStudio(vi: vi, card: true) } label: { Label(tr("Thiết kế nền thẻ", "Card artwork"), systemImage: "creditcard") }
                 NavigationLink { WalletImporter(vi: vi) } label: { Label(tr("Thêm thẻ Wallet đã ký", "Import signed Wallet pass"), systemImage: "wallet.bifold") }
             }
+            Section(tr("Quản lý cấu hình", "Configuration tools")) {
+                NavigationLink { LocalPlistEditor(vi: vi) } label: {
+                    Label(tr("Trình sửa plist cục bộ", "Local plist editor"), systemImage: "doc.text")
+                }
+                Text(tr("Nhập, kiểm tra, sao lưu và xuất tài liệu bạn chọn. Không sửa cấu hình đang chạy của iOS.", "Import, validate, back up and export selected documents. Does not modify live iOS settings.")).font(.caption).foregroundStyle(.secondary)
+            }
             Section(tr("Tương thích và an toàn", "Compatibility and safety")) {
                 Text(tr("Không ghi tệp hệ thống. Không giả mạo model máy. Thay đổi hệ thống không có API công khai.", "No system-file writes or device spoofing. System changes have no public API.")).font(.footnote)
                 Link("EnsWilde – GitHub", destination: URL(string: "https://github.com/nguyenls3005-cell/EnsWilde")!)
