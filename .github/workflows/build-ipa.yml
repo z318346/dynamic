@@ -1,0 +1,38 @@
+name: Build dynamic IPA
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate Xcode project
+        run: |
+          xcodebuild -version
+          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+          xcodegen generate
+      - name: Build unsigned device app
+        run: |
+          set -euo pipefail
+          xcodebuild -project dynamic.xcodeproj -scheme dynamic -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/build" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Package and verify IPA
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/build/Build/Products/Release-iphoneos/dynamic.app"
+          test -f "$APP/dynamic"
+          test -f "$APP/PlugIns/DynamicWidget.appex/DynamicWidget"
+          file "$APP/dynamic" "$APP/PlugIns/DynamicWidget.appex/DynamicWidget"
+          mkdir -p "$RUNNER_TEMP/package/Payload"
+          ditto "$APP" "$RUNNER_TEMP/package/Payload/dynamic.app"
+          (cd "$RUNNER_TEMP/package" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/dynamic.ipa" Payload)
+          unzip -t dynamic.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dynamic-unsigned
+          path: dynamic.ipa
+          if-no-files-found: error
