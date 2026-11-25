@@ -111,7 +111,7 @@ struct DeviceCompatibilityView: View {
                     Text(tr("Máy không có Dynamic Island; Live Activities có thể xuất hiện trên màn hình khóa, không tạo được Dynamic Island toàn hệ thống.", "No Dynamic Island hardware. Live Activities may appear on the Lock Screen instead.")).font(.footnote)
                 }
             }
-            Section(tr("Danh sách tương thích", "Compatibility list")) {
+            Section {
                 HStack {
                     Text(tr("Dòng máy", "Model"))
                     Spacer()
@@ -126,6 +126,8 @@ struct DeviceCompatibilityView: View {
                         badge(phone.intelligence).frame(width: 36)
                     }
                 }
+            } header: {
+                Text(tr("Danh sách tương thích", "Compatibility list"))
             } footer: {
                 Text(tr("DI = Dynamic Island; AI = phần cứng hỗ trợ Apple Intelligence. AI còn phụ thuộc iOS, ngôn ngữ, khu vực và thiết lập. App yêu cầu iOS 17+. Danh sách không bảo đảm widget trống sẽ luôn hiển thị.", "DI = Dynamic Island; AI = Apple Intelligence hardware eligibility. AI also depends on OS, language, region and settings. App requires iOS 17+. Blank widget visibility is not guaranteed."))
             }
