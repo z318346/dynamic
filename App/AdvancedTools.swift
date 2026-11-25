@@ -12,6 +12,9 @@ struct AdvancedTools: View {
     var body: some View {
         List {
             Section(tr("Thiết bị thực tế", "Current device")) {
+                NavigationLink { DeviceCompatibilityView(vi: vi) } label: {
+                    Label(tr("Thiết bị tương thích", "Compatible devices"), systemImage: "checkmark.shield")
+                }
                 LabeledContent("iOS", value: UIDevice.current.systemVersion)
                 LabeledContent(tr("Mã phần cứng", "Hardware identifier"), value: hardwareID)
                 NavigationLink { LayoutLab(vi: vi) } label: { Label(tr("Bố cục Dynamic Island", "Island layouts"), systemImage: "capsule") }

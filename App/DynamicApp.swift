@@ -138,6 +138,15 @@ struct HomeView: View {
                             Image(systemName: "chevron.right").font(.caption)
                         }.padding(15).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
                     }.buttonStyle(.plain)
+                    NavigationLink {
+                        DeviceCompatibilityView(vi: vi)
+                    } label: {
+                        HStack {
+                            Label(tr("Thiết bị tương thích", "Compatible devices"), systemImage: "checkmark.shield")
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.caption)
+                        }.padding(15).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(.plain)
                     Picker(tr("Ngôn ngữ", "Language"), selection: $language) {
                         Text(tr("Hệ thống", "System")).tag("system")
                         Text("Tiếng Việt").tag("vi")
@@ -185,7 +194,7 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Mở hồ sơ TikTok", "Opens TikTok profile"))
-                    Text(tr("Phiên bản", "Version") + " " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.3"))
+                    Text(tr("Phiên bản", "Version") + " " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.3.1"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)

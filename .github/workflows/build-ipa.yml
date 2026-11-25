@@ -48,15 +48,15 @@ jobs:
         with:
           name: dynamic-unsigned
           path: dist
-      - name: Publish v1.3
+      - name: Publish v1.3.1
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           unzip -t dist/dynamic.ipa
-          if gh release view v1.3 >/dev/null 2>&1; then
-            echo "v1.3 already exists; leaving release unchanged."
+          if gh release view v1.3.1 >/dev/null 2>&1; then
+            echo "v1.3.1 already exists; leaving release unchanged."
             exit 0
           fi
-          gh release create v1.3 dist/dynamic.ipa --target "$GITHUB_SHA" --title "dynamic 1.3" --latest --notes "Bản native 1.3: Live Activity trống, công cụ AI trên thiết bị tương thích, xuất hình nền và ảnh nền thẻ, nhập Wallet pass đã ký, chỉnh sửa và sao lưu plist cục bộ. Bố cục Dynamic Island chỉ xem trước. Không tích hợp worse_query, không đổi model hệ thống hay mở khóa Siri. IPA chưa ký; chưa kiểm thử trên iPhone thật."
+          gh release create v1.3.1 dist/dynamic.ipa --target "$GITHUB_SHA" --title "dynamic 1.3.1" --latest --notes "Bản 1.3.1: bổ sung nhận diện thiết bị và bảng tương thích;  Live Activity trống, công cụ AI trên thiết bị tương thích, xuất hình nền và ảnh nền thẻ, nhập Wallet pass đã ký, chỉnh sửa và sao lưu plist cục bộ. Bố cục Dynamic Island chỉ xem trước. Không tích hợp worse_query, không đổi model hệ thống hay mở khóa Siri. IPA chưa ký; chưa kiểm thử trên iPhone thật."
