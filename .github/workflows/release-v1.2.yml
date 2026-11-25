@@ -1,0 +1,39 @@
+name: Publish dynamic v1.2
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-v1.2.yml'
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: dynamic-release-v1-2
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download verified v1.2 build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dynamic-unsigned
+          run-id: '45617502861'
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Verify package
+        run: |
+          test -s dist/dynamic.ipa
+          unzip -t dist/dynamic.ipa
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh release view v1.2 >/dev/null 2>&1; then
+            echo "Release v1.2 already exists; no changes made."
+            exit 0
+          fi
+          gh release create v1.2 dist/dynamic.ipa --target 87ea3fe2549776d6839c03269495f036de298de7 --title "dynamic 1.2" --notes "Giao diện thân thiện, icon màn hình chính mới, Dynamic Island trống và liên kết TikTok @z618346. Hỗ trợ iOS 17+. IPA chưa ký; cần ký ứng dụng và Widget Extension trước khi cài. Chưa kiểm thử trên iPhone thật."
