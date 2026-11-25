@@ -31,6 +31,7 @@ final class SessionController: ObservableObject {
                 observation = Task { [weak self] in
                     for await state in current.activityStateUpdates {
                         guard !Task.isCancelled else { return }
+                        if state == .stale { self?.objectWillChange.send() }
                         if state == .ended || state == .dismissed {
                             self?.refresh()
                             return
@@ -41,28 +42,42 @@ final class SessionController: ObservableObject {
         }
     }
 
-    func toggle(vi: Bool) async {
+    var needsRenewal: Bool {
+        guard let item = activity else { return false }
+        return item.activityState == .stale || item.content.state.endsAt <= Date()
+    }
+
+    private func endSessions() async {
+        for item in Activity<IslandAttributes>.activities {
+            await item.end(nil, dismissalPolicy: .immediate)
+        }
+    }
+
+    private func startSession(vi: Bool) throws {
+        let now = Date()
+        let end = now.addingTimeInterval(8 * 3600)
+        _ = try Activity.request(attributes: IslandAttributes(sessionID: UUID().uuidString),
+            content: ActivityContent(state: .init(startedAt: now, endsAt: end, vietnamese: vi), staleDate: end),
+            pushType: nil)
+    }
+
+    func toggle(vi: Bool, renew: Bool = false) async {
         guard !busy else { return }
         refresh()
         busy = true
+        error = nil
         defer { busy = false; refresh() }
-        if active {
-            for item in Activity<IslandAttributes>.activities {
-                await item.end(nil, dismissalPolicy: .immediate)
-            }
-        } else {
-            guard allowed, UIDevice.current.userInterfaceIdiom == .phone else {
-                error = vi ? "Live Activities không khả dụng." : "Live Activities unavailable."
-                return
-            }
-            let now = Date()
-            let end = now.addingTimeInterval(8 * 3600)
-            do {
-                _ = try Activity.request(attributes: IslandAttributes(sessionID: UUID().uuidString),
-                    content: ActivityContent(state: .init(startedAt: now, endsAt: end, vietnamese: vi), staleDate: end),
-                    pushType: nil)
-            } catch { self.error = error.localizedDescription }
+        if active && !renew {
+            await endSessions()
+            return
         }
+        guard allowed, UIDevice.current.userInterfaceIdiom == .phone else {
+            error = vi ? "Live Activities không khả dụng. Kiểm tra quyền trong Cài đặt." : "Live Activities unavailable. Check permission in Settings."
+            return
+        }
+        if renew { await endSessions() }
+        do { try startSession(vi: vi) }
+        catch { self.error = error.localizedDescription }
     }
 }
 
@@ -121,6 +136,20 @@ struct HomeView: View {
                         }.buttonStyle(.plain)
                         .modifier(PowerStyle(active: controller.active))
                         .disabled(controller.busy || (!controller.active && !controller.allowed))
+                        if controller.active {
+                            Button {
+                                Task { await controller.toggle(vi: vi, renew: true) }
+                            } label: {
+                                Label(tr("Khởi động lại phiên", "Restart session"), systemImage: "arrow.clockwise")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(controller.busy || !controller.allowed)
+                            if controller.needsRenewal {
+                                Text(tr("Phiên đã hết hạn hoặc cần làm mới. Bạn có thể khởi động lại.", "Session expired or stale. You can restart it."))
+                                    .font(.caption).foregroundStyle(.orange)
+                            }
+                        }
                         if !controller.allowed {
                             Button(tr("Mở cài đặt iOS", "Open iOS settings")) {
                                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
@@ -194,7 +223,7 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Mở hồ sơ TikTok", "Opens TikTok profile"))
-                    Text(tr("Phiên bản", "Version") + " " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.3.1"))
+                    Text(tr("Phiên bản", "Version") + " " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.3.2"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
