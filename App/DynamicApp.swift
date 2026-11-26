@@ -18,6 +18,11 @@ final class SessionController: ObservableObject {
     private var observation: Task<Void, Never>?
     private var observedID: String?
     var active: Bool { activity != nil }
+    @Published private(set) var wantsActive = UserDefaults.standard.bool(forKey: "dynamic.wantsActive")
+    private func remember(_ value: Bool) {
+        wantsActive = value
+        UserDefaults.standard.set(value, forKey: "dynamic.wantsActive")
+    }
 
     func refresh() {
         allowed = ActivityAuthorizationInfo().areActivitiesEnabled
@@ -41,12 +46,36 @@ final class SessionController: ObservableObject {
         }
     }
 
+    private func start(vi: Bool) throws {
+        _ = try Activity.request(
+            attributes: IslandAttributes(sessionID: UUID().uuidString),
+            content: ActivityContent(state: .init(startedAt: Date(), endsAt: nil, vietnamese: vi), staleDate: nil),
+            pushType: nil)
+    }
+
+    func restoreIfNeeded(vi: Bool) async {
+        refresh()
+        if UserDefaults.standard.object(forKey: "dynamic.wantsActive") == nil {
+            remember(active)
+        }
+        guard wantsActive, !active, !busy, allowed,
+              UIApplication.shared.applicationState == .active,
+              UIDevice.current.userInterfaceIdiom == .phone else { return }
+        busy = true
+        error = nil
+        defer { busy = false; refresh() }
+        do { try start(vi: vi) }
+        catch { self.error = error.localizedDescription }
+    }
+
     func toggle(vi: Bool) async {
         guard !busy else { return }
         refresh()
         busy = true
+        error = nil
         defer { busy = false; refresh() }
-        if active {
+        if wantsActive || active {
+            remember(false)
             for item in Activity<IslandAttributes>.activities {
                 await item.end(nil, dismissalPolicy: .immediate)
             }
@@ -55,13 +84,8 @@ final class SessionController: ObservableObject {
                 error = vi ? "Live Activities không khả dụng." : "Live Activities unavailable."
                 return
             }
-            let now = Date()
-            let end = now.addingTimeInterval(8 * 3600)
-            do {
-                _ = try Activity.request(attributes: IslandAttributes(sessionID: UUID().uuidString),
-                    content: ActivityContent(state: .init(startedAt: now, endsAt: end, vietnamese: vi), staleDate: end),
-                    pushType: nil)
-            } catch { self.error = error.localizedDescription }
+            do { try start(vi: vi); remember(true) }
+            catch { self.error = error.localizedDescription }
         }
     }
 }
@@ -109,24 +133,26 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         Label(controller.active ? tr("Phiên đang hoạt động", "Session active") : tr("Chưa bật", "Inactive"),
                               systemImage: controller.active ? "circle.fill" : "circle")
-                        if let state = controller.activity?.content.state {
-                            Text(timerInterval: state.startedAt...max(state.startedAt, state.endsAt), countsDown: true).monospacedDigit()
+                        if controller.wantsActive && !controller.active {
+                            Button(tr("Làm mới phiên", "Resume activity")) {
+                                Task { await controller.restoreIfNeeded(vi: vi) }
+                            }.disabled(controller.busy || !controller.allowed)
                         }
                         Button {
                             Task { await controller.toggle(vi: vi) }
                         } label: {
-                            Label(controller.active ? tr("Tắt dynamic", "Stop dynamic") : tr("Bật dynamic", "Start dynamic"), systemImage: "power")
+                            Label((controller.wantsActive || controller.active) ? tr("Tắt dynamic", "Stop dynamic") : tr("Bật dynamic", "Start dynamic"), systemImage: "power")
                                 .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 16)
                                 .foregroundStyle(.white)
                         }.buttonStyle(.plain)
-                        .modifier(PowerStyle(active: controller.active))
-                        .disabled(controller.busy || (!controller.active && !controller.allowed))
+                        .modifier(PowerStyle(active: controller.wantsActive || controller.active))
+                        .disabled(controller.busy || (!controller.active && !controller.wantsActive && !controller.allowed))
                         if !controller.allowed {
                             Button(tr("Mở cài đặt iOS", "Open iOS settings")) {
                                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                             }
                         }
-                        Text(tr("Tối đa 8 giờ mỗi phiên. iOS có thể ẩn phiên trống hoặc kết thúc sớm. Không thể thu nhỏ vùng camera.", "Up to 8 hours per session. iOS may hide blank activities or end them early. The physical cutout cannot shrink."))
+                        Text(tr("Tự làm mới khi mở lại ứng dụng nếu đang bật. iOS vẫn có thể kết thúc phiên hoặc ẩn Dynamic Island.", "Resumes on reopening the app while enabled. iOS may still end the activity or hide the Dynamic Island."))
                             .font(.footnote).foregroundStyle(.secondary)
                     }.padding(18).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 24))
                     Picker(tr("Ngôn ngữ", "Language"), selection: $language) {
@@ -141,6 +167,11 @@ struct HomeView: View {
                     }
                     Text(tr("Không tài khoản. Không máy chủ. Live Activities chỉ hiển thị Dynamic Island trên iPhone có phần cứng tương thích.", "No account. No server. Dynamic Island requires compatible iPhone hardware."))
                         .font(.caption).foregroundStyle(.secondary)
+
+                }.padding(22)
+            }
+            .safeAreaInset(edge: .bottom) {
+                VStack(spacing: 5) {
                     Button {
                         guard let url = URL(string: "https://www.tiktok.com/@z618346") else { return }
                         UIApplication.shared.open(url, options: [.universalLinksOnly: true]) { opened in
@@ -176,18 +207,23 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Mở hồ sơ TikTok", "Opens TikTok profile"))
-                }.padding(22)
-            }.navigationBarTitleDisplayMode(.inline)
+                    Text("dynamic 1.2").font(.caption2).foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
+                .background(.regularMaterial)
+            }
+            .navigationBarTitleDisplayMode(.inline)
         }
         .preferredColorScheme(appearance == "dark" ? .dark : appearance == "light" ? .light : nil)
         .task {
-            controller.refresh()
+            await controller.restoreIfNeeded(vi: vi)
             for await _ in ActivityAuthorizationInfo().activityEnablementUpdates {
-                controller.refresh()
+                await controller.restoreIfNeeded(vi: vi)
             }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { controller.refresh() }
+            if phase == .active { Task { await controller.restoreIfNeeded(vi: vi) } }
         }
         .alert("dynamic", isPresented: Binding(get: { controller.error != nil }, set: { if !$0 { controller.error = nil } })) {
             Button("OK") { controller.error = nil }

@@ -1,12 +1,12 @@
-name: Publish public dynamic 1.1
+name: Publish dynamic 1.2
 on:
   push:
-    branches: [release-1.1]
+    branches: [release-1.2-public]
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: public-dynamic-1-1
+  group: public-dynamic-1-2
   cancel-in-progress: false
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Build v1.1 with original app icon
+      - name: Build v1.2-public with original app icon
         run: |
           set -euo pipefail
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
@@ -28,18 +28,18 @@ jobs:
           test -f "$APP/dynamic"
           test -f "$APP/Assets.car"
           test -f "$APP/PlugIns/DynamicWidget.appex/DynamicWidget"
-          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Info.plist")" = "1.1"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Info.plist")" = "1.2"
           mkdir -p "$RUNNER_TEMP/package/Payload"
           ditto "$APP" "$RUNNER_TEMP/package/Payload/dynamic.app"
-          (cd "$RUNNER_TEMP/package" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/dynamic_1.1.ipa" Payload)
-          unzip -t dynamic_1.1.ipa
-          shasum -a 256 dynamic_1.1.ipa > dynamic_1.1.ipa.sha256
+          (cd "$RUNNER_TEMP/package" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/dynamic_1.2.ipa" Payload)
+          unzip -t dynamic_1.2.ipa
+          shasum -a 256 dynamic_1.2.ipa > dynamic_1.2.ipa.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: dynamic-1.1
+          name: dynamic-1.2
           path: |
-            dynamic_1.1.ipa
-            dynamic_1.1.ipa.sha256
+            dynamic_1.2.ipa
+            dynamic_1.2.ipa.sha256
           if-no-files-found: error
   publish:
     needs: build
@@ -49,14 +49,17 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dynamic-1.1
+          name: dynamic-1.2
           path: dist
-      - name: Publish only original v1.1
+      - name: Publish only original v1.2-public
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          (cd dist && sha256sum -c dynamic_1.1.ipa.sha256)
-          gh release upload v1.1 dist/dynamic_1.1.ipa dist/dynamic_1.1.ipa.sha256 --clobber
-          gh release edit v1.1 --latest --notes "Bản 1.1 giữ nguyên giao diện và chức năng gốc, bổ sung AppIcon nền xanh trắng và liên kết TikTok @z618346. Build 3. iOS 17+. IPA chưa ký; cần ký lại phù hợp. Mã nguồn build: https://github.com/$GH_REPO/tree/$GITHUB_SHA"
+          (cd dist && sha256sum -c dynamic_1.2.ipa.sha256)
+          if gh release view v1.2-public >/dev/null 2>&1; then
+            gh release upload v1.2-public dist/dynamic_1.2.ipa dist/dynamic_1.2.ipa.sha256 --clobber
+          else
+            gh release create v1.2-public dist/dynamic_1.2.ipa dist/dynamic_1.2.ipa.sha256 --target "$GITHUB_SHA" --title "dynamic 1.2" --latest --notes "Bản 1.2 công khai: TikTok cố định dưới màn hình, bỏ đếm ngược và tự làm mới Live Activity khi mở app nếu đang bật. iOS vẫn giới hạn thời lượng phiên và quyền hiển thị. IPA chưa ký."
+          fi
