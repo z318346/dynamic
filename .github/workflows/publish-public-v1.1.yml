@@ -1,0 +1,94 @@
+name: Publish public dynamic 1.1
+on:
+  push:
+    branches: [release-1.1]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: public-dynamic-1-1
+  cancel-in-progress: false
+jobs:
+  hide-newer-releases:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Move newer releases to draft without deleting assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          failed=0
+          for pair in '458172120:v1.4' '458155804:v1.3.2' '458143652:v1.3.1' '458115836:v1.2'; do
+            id="${pair%%:*}"
+            tag="${pair#*:}"
+            actual=$(gh api "repos/$GH_REPO/releases/$id" --jq .tag_name) || { failed=1; continue; }
+            if [[ "$actual" != "$tag" ]]; then
+              echo "::error::Unexpected release tag $actual"
+              failed=1
+              continue
+            fi
+            if gh api --method PATCH "repos/$GH_REPO/releases/$id" -F draft=true --jq '.draft' | grep -qx true; then
+              echo "$tag is draft; assets preserved."
+            else
+              echo "::error::Could not move $tag to draft; nothing deleted."
+              failed=1
+            fi
+          done
+          exit "$failed"
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e8bf1776511ffc65318c7e171d0b9339c51f83d2
+      - name: Build original v1.1
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+          xcodegen generate
+          xcodebuild -project dynamic.xcodeproj -scheme dynamic -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/build" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Verify and package IPA
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/build/Build/Products/Release-iphoneos/dynamic.app"
+          test -f "$APP/dynamic"
+          test -f "$APP/PlugIns/DynamicWidget.appex/DynamicWidget"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Info.plist")" = "1.1"
+          mkdir -p "$RUNNER_TEMP/package/Payload"
+          ditto "$APP" "$RUNNER_TEMP/package/Payload/dynamic.app"
+          (cd "$RUNNER_TEMP/package" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/dynamic_1.1.ipa" Payload)
+          unzip -t dynamic_1.1.ipa
+          shasum -a 256 dynamic_1.1.ipa > dynamic_1.1.ipa.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dynamic-1.1
+          path: |
+            dynamic_1.1.ipa
+            dynamic_1.1.ipa.sha256
+          if-no-files-found: error
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dynamic-1.1
+          path: dist
+      - name: Publish only original v1.1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          (cd dist && sha256sum -c dynamic_1.1.ipa.sha256)
+          if gh release view v1.1 >/dev/null 2>&1; then
+            echo "v1.1 already exists; no replacement performed."
+            exit 0
+          fi
+          gh release create v1.1 dist/dynamic_1.1.ipa dist/dynamic_1.1.ipa.sha256 --target e8bf1776511ffc65318c7e171d0b9339c51f83d2 --title "dynamic 1.1" --latest --notes "Bản 1.1 gốc. Live Activity trống trên thiết bị tương thích, iOS 17+. IPA chưa ký; cần ký lại phù hợp trước khi cài. Không thay đổi model hay kích hoạt Dynamic Island trên thiết bị không hỗ trợ."
