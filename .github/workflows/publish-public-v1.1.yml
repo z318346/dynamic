@@ -9,35 +9,6 @@ concurrency:
   group: public-dynamic-1-1
   cancel-in-progress: false
 jobs:
-  hide-newer-releases:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Move newer releases to draft without deleting assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          set -uo pipefail
-          failed=0
-          for pair in '458172120:v1.4' '458155804:v1.3.2' '458143652:v1.3.1' '458115836:v1.2'; do
-            id="${pair%%:*}"
-            tag="${pair#*:}"
-            actual=$(gh api "repos/$GH_REPO/releases/$id" --jq .tag_name) || { failed=1; continue; }
-            if [[ "$actual" != "$tag" ]]; then
-              echo "::error::Unexpected release tag $actual"
-              failed=1
-              continue
-            fi
-            if gh api --method PATCH "repos/$GH_REPO/releases/$id" -F draft=true --jq '.draft' | grep -qx true; then
-              echo "$tag is draft; assets preserved."
-            else
-              echo "::error::Could not move $tag to draft; nothing deleted."
-              failed=1
-            fi
-          done
-          exit "$failed"
   build:
     runs-on: macos-26
     timeout-minutes: 30
@@ -88,4 +59,4 @@ jobs:
           set -euo pipefail
           (cd dist && sha256sum -c dynamic_1.1.ipa.sha256)
           gh release upload v1.1 dist/dynamic_1.1.ipa dist/dynamic_1.1.ipa.sha256 --clobber
-          gh release edit v1.1 --latest --notes "Bản 1.1 giữ nguyên giao diện và chức năng gốc, bổ sung AppIcon nền xanh trắng. Build 2. iOS 17+. IPA chưa ký; cần ký lại phù hợp. Mã nguồn build: https://github.com/$GH_REPO/tree/$GITHUB_SHA"
+          gh release edit v1.1 --latest --notes "Bản 1.1 giữ nguyên giao diện và chức năng gốc, bổ sung AppIcon nền xanh trắng và liên kết TikTok @z618346. Build 3. iOS 17+. IPA chưa ký; cần ký lại phù hợp. Mã nguồn build: https://github.com/$GH_REPO/tree/$GITHUB_SHA"

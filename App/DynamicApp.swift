@@ -141,6 +141,41 @@ struct HomeView: View {
                     }
                     Text(tr("Không tài khoản. Không máy chủ. Live Activities chỉ hiển thị Dynamic Island trên iPhone có phần cứng tương thích.", "No account. No server. Dynamic Island requires compatible iPhone hardware."))
                         .font(.caption).foregroundStyle(.secondary)
+                    Button {
+                        guard let url = URL(string: "https://www.tiktok.com/@z618346") else { return }
+                        UIApplication.shared.open(url, options: [.universalLinksOnly: true]) { opened in
+                            if !opened {
+                                Task { @MainActor in
+                                    UIApplication.shared.open(url)
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "music.note")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 44, height: 44)
+                                .background(.black, in: RoundedRectangle(cornerRadius: 13))
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(tr("TikTok của mình", "My TikTok"))
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                Text("@z618346")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(12)
+                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 19))
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint(tr("Mở hồ sơ TikTok", "Opens TikTok profile"))
                 }.padding(22)
             }.navigationBarTitleDisplayMode(.inline)
         }
